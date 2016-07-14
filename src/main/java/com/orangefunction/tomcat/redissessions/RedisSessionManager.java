@@ -206,15 +206,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
   }
 
   protected void returnConnection(Jedis jedis, Boolean error) {
-    if (error) {
-      connectionPool.returnBrokenResource(jedis);
-    } else {
-      connectionPool.returnResource(jedis);
-    }
-  }
-
-  protected void returnConnection(Jedis jedis) {
-    returnConnection(jedis, false);
+    jedis.close();
   }
 
   @Override
@@ -702,6 +694,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
           throw new LifecycleException("Error configuring Redis Sentinel connection pool: expected both `sentinelMaster` and `sentiels` to be configured");
         }
       } else {
+        log.info("===========> init jedis without sentinel , host : "+getHost());
         connectionPool = new JedisPool(this.connectionPoolConfig, getHost(), getPort(), getTimeout(), getPassword());
       }
     } catch (Exception e) {
@@ -716,8 +709,8 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
 
     Loader loader = null;
 
-    if (getContext() != null) {
-      loader = getContext().getLoader();
+    if (container != null) {
+      loader = container.getLoader();
     }
 
     ClassLoader classLoader = null;
