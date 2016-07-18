@@ -1,18 +1,22 @@
 package com.orangefunction.tomcat.redissessions;
 
-import java.security.Principal;
 import org.apache.catalina.Manager;
+import org.apache.catalina.SessionListener;
 import org.apache.catalina.session.StandardSession;
-import java.util.HashMap;
-import java.io.IOException;
-
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import redis.clients.jedis.Jedis;
+
+import java.io.IOException;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
 public class RedisSession extends StandardSession {
 
-  private final Log log = LogFactory.getLog(RedisSession.class);
+  private static final Log log = LogFactory.getLog(RedisSession.class);
 
   protected static Boolean manualDirtyTrackingSupportEnabled = false;
 
@@ -27,24 +31,41 @@ public class RedisSession extends StandardSession {
   }
 
 
-  protected HashMap<String, Object> changedAttributes;
+//  protected HashMap<String, Object> changedAttributes;
   protected Boolean dirty;
+
+  protected int sessionAttributesHash;
+
+  public RedisSession() {
+    // TODO Auto-generated constructor stub
+    super(null);
+    resetDirtyTracking();
+  }
 
   public RedisSession(Manager manager) {
     super(manager);
     resetDirtyTracking();
   }
 
-  public Boolean isDirty() {
-    return dirty || !changedAttributes.isEmpty();
+  public void setSessionAttributesHash(int sessionAttributesHash) {
+    this.sessionAttributesHash = sessionAttributesHash;
   }
 
-  public HashMap<String, Object> getChangedAttributes() {
-    return changedAttributes;
+  public int getSessionAttributesHash() {
+    return sessionAttributesHash;
   }
+
+  public Boolean isDirty() {
+//    return dirty || !changedAttributes.isEmpty();
+    return dirty;
+  }
+
+//  public HashMap<String, Object> getChangedAttributes() {
+//    return changedAttributes;
+//  }
 
   public void resetDirtyTracking() {
-    changedAttributes = new HashMap<>();
+//    changedAttributes = new HashMap<>();
     dirty = false;
   }
 
@@ -71,7 +92,8 @@ public class RedisSession extends StandardSession {
           log.error("Error saving session on setAttribute (triggered by saveOnChange=true): " + ex.getMessage());
         }
       } else {
-        changedAttributes.put(key, value);
+//        changedAttributes.put(key, value);
+        dirty=true;
       }
     }
   }
@@ -117,4 +139,55 @@ public class RedisSession extends StandardSession {
     this.setCreationTime(in.readLong());
   }
 
+  public boolean exclude(String name) {
+    return super.exclude(name);
+  }
+  public void removeAttributeInternal(String name, boolean notify) {
+    super.removeAttributeInternal(name, notify);
+  }
+
+  public void setLastAccessedTime(long lastAccessedTime) {
+    this.lastAccessedTime = lastAccessedTime;
+  }
+
+  public void setIsNew(boolean isNew) {
+    this.isNew = isNew;
+  }
+
+  public void setIsValid(boolean isValid) {
+    this.isValid = isValid;
+  }
+
+  public void setThisAccessedTime(long thisAccessedTime) {
+    this.thisAccessedTime = thisAccessedTime;
+  }
+
+  public Map<String, Object> getAttrbutes() {
+    return this.attributes;
+  }
+
+  public void setAttrbutes(Map<String, Object> attributes) {
+    this.attributes = attributes;
+  }
+
+  public List<SessionListener> getListeners() {
+    return listeners;
+  }
+
+  public void setListeners(ArrayList<SessionListener> listeners) {
+    this.listeners = listeners;
+  }
+
+  public Map<String, Object> getNotes() {
+    return notes;
+  }
+
+  public void setNotes(Map<String, Object> notes) {
+    this.notes = notes;
+  }
+
+  @Override
+  protected boolean isAttributeDistributable(String name, Object value) {
+    return true;
+  }
 }

@@ -1,21 +1,16 @@
 package com.orangefunction.tomcat.redissessions;
 
+import com.orangefunction.tomcat.redissessions.util.MurmurHash3;
 import org.apache.catalina.util.CustomObjectInputStream;
-
-import javax.servlet.http.HttpSession;
-
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.io.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
+import java.io.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+
 public class JavaSerializer implements Serializer {
   private ClassLoader loader;
-
   private final Log log = LogFactory.getLog(JavaSerializer.class);
 
   @Override
@@ -23,7 +18,7 @@ public class JavaSerializer implements Serializer {
     this.loader = loader;
   }
 
-  public byte[] attributesHashFrom(RedisSession session) throws IOException {
+  public int attributesHashFrom(RedisSession session) throws IOException {
     HashMap<String,Object> attributes = new HashMap<String,Object>();
     for (Enumeration<String> enumerator = session.getAttributeNames(); enumerator.hasMoreElements();) {
       String key = enumerator.nextElement();
@@ -41,24 +36,18 @@ public class JavaSerializer implements Serializer {
       serialized = bos.toByteArray();
     }
 
-    MessageDigest digester = null;
-    try {
-      digester = MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      log.error("Unable to get MessageDigest instance for MD5");
-    }
-    return digester.digest(serialized);
+    return MurmurHash3.hash(serialized);
   }
 
   @Override
-  public byte[] serializeFrom(RedisSession session, SessionSerializationMetadata metadata) throws IOException {
+  public byte[] serializeFrom(RedisSession session) throws IOException {
     byte[] serialized = null;
 
     try (
          ByteArrayOutputStream bos = new ByteArrayOutputStream();
          ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(bos));
     ) {
-      oos.writeObject(metadata);
+//      oos.writeObject(metadata);
       session.writeObjectData(oos);
       oos.flush();
       serialized = bos.toByteArray();
@@ -68,14 +57,15 @@ public class JavaSerializer implements Serializer {
   }
 
   @Override
-  public void deserializeInto(byte[] data, RedisSession session, SessionSerializationMetadata metadata) throws IOException, ClassNotFoundException {
+  public RedisSession deserializeInto(byte[] data, RedisSession session) throws IOException, ClassNotFoundException {
     try(
         BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(data));
         ObjectInputStream ois = new CustomObjectInputStream(bis, loader);
     ) {
-      SessionSerializationMetadata serializedMetadata = (SessionSerializationMetadata)ois.readObject();
-      metadata.copyFieldsFrom(serializedMetadata);
+//      SessionSerializationMetadata serializedMetadata = (SessionSerializationMetadata)ois.readObject();
+//      metadata.copyFieldsFrom(serializedMetadata);
       session.readObjectData(ois);
     }
+    return session;
   }
 }
