@@ -40,28 +40,35 @@ public class KryoSerializer implements Serializer{
   @Override
   public int attributesHashFrom(RedisSession session) throws IOException {
     Kryo kryo = pool.borrow();
+
     Output out = new Output(new byte[INIT_BUFFER_LENGTH],MAX_BUFFER_LENGTH);
     out.clear();
     kryo.writeObject(out,session.getAttrbutes());
 
+    pool.release(kryo);
     return MurmurHash3.hash(out.getBuffer());
   }
 
   @Override
   public byte[] serializeFrom(RedisSession session) throws IOException {
     Kryo kryo = pool.borrow();
+
     Output out = new Output(new byte[INIT_BUFFER_LENGTH],MAX_BUFFER_LENGTH);
     out.clear();
     kryo.writeObject(out,session);
+
+    pool.release(kryo);
     return out.toBytes();
   }
 
   @Override
   public RedisSession deserializeInto(byte[] data, RedisSession session) throws IOException, ClassNotFoundException {
     Kryo kryo = pool.borrow();
+
     Input input=new Input(data);
     RedisSession redisSession = kryo.readObject(input, RedisSession.class);
     redisSession.setManager(session.getManager());
+
     pool.release(kryo);
     return redisSession;
   }
