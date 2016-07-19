@@ -5,7 +5,6 @@ import org.apache.catalina.SessionListener;
 import org.apache.catalina.session.StandardSession;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
 import java.security.Principal;

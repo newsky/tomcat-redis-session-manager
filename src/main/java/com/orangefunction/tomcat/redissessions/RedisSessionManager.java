@@ -275,7 +275,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
       throw new LifecycleException(e);
     }
 
-    log.info("Will expire sessions after " + getMaxInactiveInterval() + " seconds");
+    log.info(" -------->> Will expire sessions after " + getMaxInactiveInterval() + " seconds");
 
     initializeDatabaseConnection();
 
@@ -607,7 +607,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
         log.trace("Save was determined to be unnecessary");
       }
 
-      log.trace("Setting expire timeout on session [" + redisSession.getId() + "] to " + getMaxInactiveInterval());
+//      log.info(" ===> Setting expire timeout on session [" + redisSession.getId() + "] to " + getMaxInactiveInterval());
       jedis.expire(binaryId, getMaxInactiveInterval());
 
       error = false;

@@ -18,31 +18,31 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RedisSessionSerializer extends Serializer<RedisSession> {
   @Override
-  public void write(Kryo kryo, Output output, RedisSession object) {
+  public void write(Kryo kryo, Output output, RedisSession redisSession) {
     // Write the scalar instance variables (except Manager)
-    output.writeLong(object.getCreationTime());
-    output.writeLong(object.getLastAccessedTime());
-    output.writeInt(object.getMaxInactiveInterval());
-    output.writeBoolean(object.isNew());
-    output.writeBoolean(object.isValid());
-    output.writeLong(object.getThisAccessedTime());
-    output.writeString(object.getId());
+    output.writeLong(redisSession.getCreationTime());
+    output.writeLong(redisSession.getLastAccessedTime());
+    output.writeInt(redisSession.getMaxInactiveInterval());
+    output.writeBoolean(redisSession.isNew());
+    output.writeBoolean(redisSession.isValid());
+    output.writeLong(redisSession.getThisAccessedTime());
+    output.writeString(redisSession.getId());
 
     // Accumulate the names of serializable and non-serializable attributes
-    Enumeration<String> keys = object.getAttributeNames();
+    Enumeration<String> keys = redisSession.getAttributeNames();
     ArrayList<String> saveNames = new ArrayList<>();
     ArrayList<Object> saveValues = new ArrayList<>();
     for (; keys.hasMoreElements();) {
       String key = keys.nextElement();
-      Object value = object.getAttribute(key);
+      Object value = redisSession.getAttribute(key);
       if (value == null)
         continue;
 //      else if ((value instanceof Serializable) && (!object.exclude(key))) {
-      else if (!object.exclude(key)) {
+      else if (!redisSession.exclude(key)) {
         saveNames.add(key);
         saveValues.add(value);
       } else {
-        object.removeAttributeInternal(key, true);
+        redisSession.removeAttributeInternal(key, true);
       }
     }
 
