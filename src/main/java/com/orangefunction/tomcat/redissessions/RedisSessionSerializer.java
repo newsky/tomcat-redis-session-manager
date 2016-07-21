@@ -19,6 +19,7 @@ public class RedisSessionSerializer extends Serializer<RedisSession> {
   @Override
   public void write(Kryo kryo, Output output, RedisSession redisSession) {
     // Write the scalar instance variables (except Manager)
+    output.writeInt(redisSession.getSessionAttributesHash());
     output.writeLong(redisSession.getCreationTime());
     output.writeLong(redisSession.getLastAccessedTime());
     output.writeInt(redisSession.getMaxInactiveInterval());
@@ -59,6 +60,7 @@ public class RedisSessionSerializer extends Serializer<RedisSession> {
     // Deserialize the scalar instance variables (except Manager)
     RedisSession rs = new RedisSession();
     rs.setAuthType(null);
+    rs.setSessionAttributesHash(input.readInt());
     rs.setCreationTime(input.readLong());
     rs.setLastAccessedTime(input.readLong());
     rs.setMaxInactiveInterval(input.readInt());
