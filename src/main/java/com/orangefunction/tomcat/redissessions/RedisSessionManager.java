@@ -53,7 +53,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
 
   protected static String name = "RedisSessionManager";
 
-  protected String serializationStrategyClass = "com.orangefunction.tomcat.redissessions.JavaSerializer";
+  protected String serializationStrategyClass = "com.orangefunction.tomcat.redissessions.KryoSerializer";
 
   protected EnumSet<SessionPersistPolicy> sessionPersistPoliciesSet = EnumSet.of(SessionPersistPolicy.DEFAULT);
 
@@ -614,6 +614,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
       return error;
     } catch (IOException e) {
       log.error(e.getMessage());
+      e.printStackTrace();
       throw e;
     } finally {
       return error;
@@ -648,7 +649,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
     if (redisSession != null) {
       try {
         if (redisSession.isValid()) {
-          log.trace("Request with session completed, saving session " + redisSession.getId());
+          log.info(" ====>> Request with session completed, saving session " + redisSession.getId());
           save(redisSession, getAlwaysSaveAfterRequest());
         } else {
           log.trace("HTTP Session has been invalidated, removing :" + redisSession.getId());

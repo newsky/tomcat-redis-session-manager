@@ -10,6 +10,9 @@ import com.orangefunction.tomcat.redissessions.util.MurmurHash3;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by oyj
@@ -39,11 +42,17 @@ public class KryoSerializer implements Serializer{
 
   @Override
   public int attributesHashFrom(RedisSession session) throws IOException {
+    Map<String,Object> attributes = new HashMap<>();
+    for (Enumeration<String> enumerator = session.getAttributeNames(); enumerator.hasMoreElements();) {
+      String key = enumerator.nextElement();
+      attributes.put(key, session.getAttribute(key));
+    }
+
     Kryo kryo = pool.borrow();
 
     Output out = new Output(new byte[INIT_BUFFER_LENGTH],MAX_BUFFER_LENGTH);
     out.clear();
-    kryo.writeObject(out,session.getAttrbutes());
+    kryo.writeObject(out,attributes);
 
     pool.release(kryo);
     return MurmurHash3.hash(out.getBuffer());
