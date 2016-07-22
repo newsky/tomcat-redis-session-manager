@@ -6,19 +6,23 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
+import com.esotericsoftware.kryo.serializers.CollectionSerializer;
 import com.orangefunction.tomcat.redissessions.util.MurmurHash3;
+import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by oyj
  * on 16-7-15.
  */
 public class KryoSerializer implements Serializer{
+  Log log= LogFactory.getLog(KryoSerializer.class);
+
   private static final int INIT_BUFFER_LENGTH = 4096;
   private static final int MAX_BUFFER_LENGTH = 1024 * 200;
   private ClassLoader loader;
@@ -28,6 +32,12 @@ public class KryoSerializer implements Serializer{
       Kryo kryo = new Kryo();
       kryo.setClassLoader(loader);
       kryo.register(RedisSession.class, new RedisSessionSerializer());
+
+      kryo.addDefaultSerializer(Collections.unmodifiableCollection(Collections.EMPTY_LIST).getClass(), UnmodifiableCollectionsSerializer.class);
+      kryo.addDefaultSerializer(Collections.unmodifiableMap(Collections.EMPTY_MAP).getClass(), UnmodifiableCollectionsSerializer.class);
+      kryo.addDefaultSerializer(Collections.unmodifiableSet(Collections.EMPTY_SET).getClass(), UnmodifiableCollectionsSerializer.class);
+//      kryo.addDefaultSerializer(Collection.class, CollectionSerializer.class);
+
       kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
       // configure kryo instance, customize settings
       return kryo;

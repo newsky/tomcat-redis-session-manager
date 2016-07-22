@@ -278,7 +278,7 @@ public class RedisSessionManager extends ManagerBase implements Lifecycle {
 
     initializeDatabaseConnection();
 
-    setDistributable(true);
+//    setDistributable(true);
   }
 
   /**

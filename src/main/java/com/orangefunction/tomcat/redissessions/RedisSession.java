@@ -186,7 +186,7 @@ public class RedisSession extends StandardSession {
   }
 
   @Override
-  protected boolean isAttributeDistributable(String name, Object value) {
+  public boolean isAttributeDistributable(String name, Object value) {
     return true;
   }
 }
