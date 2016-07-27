@@ -166,7 +166,7 @@ public class RedisSession extends StandardSession {
     return this.attributes;
   }
 
-  public void setAttrbutes(ConcurrentMap<String, Object> attributes) {
+  public void setAttrbutes(Map<String, Object> attributes) {
     this.attributes = attributes;
   }
 
