@@ -11,6 +11,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 
 public class RedisSession extends StandardSession {
@@ -165,7 +166,7 @@ public class RedisSession extends StandardSession {
     return this.attributes;
   }
 
-  public void setAttrbutes(Map<String, Object> attributes) {
+  public void setAttrbutes(ConcurrentMap<String, Object> attributes) {
     this.attributes = attributes;
   }
 

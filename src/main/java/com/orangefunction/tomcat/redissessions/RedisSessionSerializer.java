@@ -58,41 +58,41 @@ public class RedisSessionSerializer extends Serializer<RedisSession> {
   @Override
   public RedisSession read(Kryo kryo, Input input, Class<RedisSession> type) {
     // Deserialize the scalar instance variables (except Manager)
-    RedisSession rs = new RedisSession();
-    rs.setAuthType(null);
-    rs.setSessionAttributesHash(input.readInt());
-    rs.setCreationTime(input.readLong());
-    rs.setLastAccessedTime(input.readLong());
-    rs.setMaxInactiveInterval(input.readInt());
-    rs.setIsNew(input.readBoolean());
-    rs.setIsValid(input.readBoolean());
-    rs.setThisAccessedTime(input.readLong());
-    rs.setPrincipal(null);
+    RedisSession session = new RedisSession();
+    session.setAuthType(null);
+    session.setSessionAttributesHash(input.readInt());
+    session.setCreationTime(input.readLong());
+    session.setLastAccessedTime(input.readLong());
+    session.setMaxInactiveInterval(input.readInt());
+    session.setIsNew(input.readBoolean());
+    session.setIsValid(input.readBoolean());
+    session.setThisAccessedTime(input.readLong());
+    session.setPrincipal(null);
     // setId((String) stream.readObject());
-    rs.setId(input.readString());
+    session.setId(input.readString());
 
     // Deserialize the attribute count and attribute values
-    if (rs.getAttrbutes() == null) {
-      rs.setAttrbutes(new ConcurrentHashMap<String, Object>());
+    if (session.getAttrbutes() == null) {
+      session.setAttrbutes(new ConcurrentHashMap<String, Object>());
     }
     int n = input.readInt();
-    boolean isValidSave = rs.isValid();
-    rs.setIsValid(true);
+    boolean isValidSave = session.isValid();
+    session.setIsValid(true);
     for (int i = 0; i < n; i++) {
       String name = input.readString();
       Object value = kryo.readClassAndObject(input);
-      rs.getAttrbutes().put(name, value);
+      session.getAttrbutes().put(name, value);
     }
-    rs.setIsValid(isValidSave);
+    session.setIsValid(isValidSave);
 
-    if (rs.getListeners() == null) {
+    if (session.getListeners() == null) {
       ArrayList listeners = new ArrayList<SessionListener>();
-      rs.setListeners(listeners);
+      session.setListeners(listeners);
     }
 
-    if (rs.getNotes() == null) {
-      rs.setNotes(new Hashtable<String, Object>());
+    if (session.getNotes() == null) {
+      session.setNotes(new Hashtable<String, Object>());
     }
-    return rs;
+    return session;
   }
 }
