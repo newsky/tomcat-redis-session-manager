@@ -6,9 +6,9 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
-import com.esotericsoftware.kryo.serializers.CollectionSerializer;
 import com.orangefunction.tomcat.redissessions.util.MurmurHash3;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
+import org.apache.catalina.filters.CsrfPreventionFilterLruCacheSerializer;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.objenesis.strategy.StdInstantiatorStrategy;
@@ -20,18 +20,20 @@ import java.util.*;
  * Created by oyj
  * on 16-7-15.
  */
-public class KryoSerializer implements Serializer{
-  Log log= LogFactory.getLog(KryoSerializer.class);
+public class KryoSerializer implements Serializer {
+  Log log = LogFactory.getLog(KryoSerializer.class);
 
-  private static final int INIT_BUFFER_LENGTH = 4096;
-  private static final int MAX_BUFFER_LENGTH = 1024 * 200;
+  public static final int INIT_BUFFER_LENGTH = 4096;
+  public static final int MAX_BUFFER_LENGTH = 1024 * 200;
   private ClassLoader loader;
 
   private KryoFactory factory = new KryoFactory() {
-    public Kryo create () {
+    public Kryo create() {
       Kryo kryo = new Kryo();
       kryo.setClassLoader(loader);
       kryo.register(RedisSession.class, new RedisSessionSerializer());
+
+      kryo.addDefaultSerializer(CsrfPreventionFilterLruCacheSerializer.clazz, CsrfPreventionFilterLruCacheSerializer.class);
 
       kryo.addDefaultSerializer(Collections.unmodifiableCollection(Collections.EMPTY_LIST).getClass(), UnmodifiableCollectionsSerializer.class);
       kryo.addDefaultSerializer(Collections.unmodifiableMap(Collections.EMPTY_MAP).getClass(), UnmodifiableCollectionsSerializer.class);
@@ -47,22 +49,22 @@ public class KryoSerializer implements Serializer{
 
   @Override
   public void setClassLoader(ClassLoader loader) {
-    this.loader=loader;
+    this.loader = loader;
   }
 
   @Override
   public int attributesHashFrom(RedisSession session) throws IOException {
-    Map<String,Object> attributes = new HashMap<>();
-    for (Enumeration<String> enumerator = session.getAttributeNames(); enumerator.hasMoreElements();) {
+    Map<String, Object> attributes = new HashMap<>();
+    for (Enumeration<String> enumerator = session.getAttributeNames(); enumerator.hasMoreElements(); ) {
       String key = enumerator.nextElement();
       attributes.put(key, session.getAttribute(key));
     }
 
     Kryo kryo = pool.borrow();
 
-    Output out = new Output(new byte[INIT_BUFFER_LENGTH],MAX_BUFFER_LENGTH);
+    Output out = new Output(new byte[INIT_BUFFER_LENGTH], MAX_BUFFER_LENGTH);
     out.clear();
-    kryo.writeObject(out,attributes);
+    kryo.writeObject(out, attributes);
 
     pool.release(kryo);
     return MurmurHash3.hash(out.getBuffer());
@@ -72,9 +74,9 @@ public class KryoSerializer implements Serializer{
   public byte[] serializeFrom(RedisSession session) throws IOException {
     Kryo kryo = pool.borrow();
 
-    Output out = new Output(new byte[INIT_BUFFER_LENGTH],MAX_BUFFER_LENGTH);
+    Output out = new Output(new byte[INIT_BUFFER_LENGTH], MAX_BUFFER_LENGTH);
     out.clear();
-    kryo.writeObject(out,session);
+    kryo.writeObject(out, session);
 
     pool.release(kryo);
     return out.toBytes();
@@ -82,13 +84,27 @@ public class KryoSerializer implements Serializer{
 
   @Override
   public RedisSession deserializeInto(byte[] data, RedisSession session) throws IOException, ClassNotFoundException {
-    Kryo kryo = pool.borrow();
-
-    Input input=new Input(data);
-    RedisSession redisSession = kryo.readObject(input, RedisSession.class);
+    RedisSession redisSession = deserializeInto(data);
     redisSession.setManager(session.getManager());
 
+    return redisSession;
+  }
+
+  RedisSession deserializeInto(byte[] data) throws IOException, ClassNotFoundException {
+    Kryo kryo = pool.borrow();
+
+    Input input = new Input(data);
+    RedisSession redisSession = kryo.readObject(input, RedisSession.class);
     pool.release(kryo);
     return redisSession;
   }
+
+  public Kryo borrow(){
+    return pool.borrow();
+  }
+
+  public void release(Kryo kryo){
+    pool.release(kryo);
+  }
+
 }

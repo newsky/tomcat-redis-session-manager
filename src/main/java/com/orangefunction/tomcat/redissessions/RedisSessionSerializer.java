@@ -37,7 +37,6 @@ public class RedisSessionSerializer extends Serializer<RedisSession> {
       Object value = redisSession.getAttribute(key);
       if (value == null)
         continue;
-//      else if ((value instanceof Serializable) && (!object.exclude(key))) {
       else if (!redisSession.exclude(key)) {
         saveNames.add(key);
         saveValues.add(value);
